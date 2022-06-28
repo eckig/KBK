@@ -3,12 +3,15 @@ package io.github.eckig.kbk;
 import java.util.Objects;
 import java.util.Random;
 
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class KeyByKey
 {
@@ -21,7 +24,7 @@ public class KeyByKey
         @Override
         protected void invalidated()
         {
-         advance();
+            advance();
         }
     };
     private final BooleanProperty mIncludeUppercase = new SimpleBooleanProperty()
@@ -33,6 +36,9 @@ public class KeyByKey
         }
     };
     private final StringProperty mCurrent = new SimpleStringProperty();
+
+    private final ObservableList<KeyResult> mResults =
+            FXCollections.observableArrayList(e -> new Observable[] {e.rateProperty()});
 
     KeyByKey()
     {
@@ -47,9 +53,21 @@ public class KeyByKey
     public void tryNext(String pCharacter)
     {
         final var expected = mCurrent.get();
-        if(Objects.equals(expected, pCharacter))
+        final var result =
+                mResults.stream().filter(r -> Objects.equals(r.getKey(), expected)).findFirst().orElseGet(() ->
+                {
+                    final var r = new KeyResult(expected);
+                    mResults.add(r);
+                    return r;
+                });
+        if (Objects.equals(expected, pCharacter))
         {
             advance();
+            result.logHit();
+        }
+        else
+        {
+            result.logMiss();
         }
     }
 
@@ -70,5 +88,10 @@ public class KeyByKey
     public Property<Boolean> includeNumbersProperty()
     {
         return mIncludeDigits;
+    }
+
+    public ObservableList<KeyResult> getResults()
+    {
+        return mResults;
     }
 }
