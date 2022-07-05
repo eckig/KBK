@@ -33,7 +33,7 @@ public class Trainer extends Application
         cbxNumbers.selectedProperty().bindBidirectional(mTrainer.includeNumbersProperty());
 
         final var cbxUpper = new CheckBox("Include Uppercase?");
-        cbxNumbers.selectedProperty().bindBidirectional(mTrainer.includeUppercaseProperty());
+        cbxUpper.selectedProperty().bindBidirectional(mTrainer.includeUppercaseProperty());
 
         final var display = new Label();
         display.setStyle("-fx-font-family: monospace; -fx-font-size: 400%;");
