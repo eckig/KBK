@@ -1,5 +1,6 @@
 package io.github.eckig.kbk;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 
@@ -16,6 +17,7 @@ import javafx.collections.ObservableList;
 public class KeyByKey
 {
     private static final String CHARS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String CHARS_LOWER = CHARS_UPPER.toLowerCase(Locale.ENGLISH);
     private static final String DIGITS = "0123456789";
     private static final Random RANDOM = new Random();
 
@@ -53,13 +55,17 @@ public class KeyByKey
     public void tryNext(String pCharacter)
     {
         final var expected = mCurrent.get();
+        final var expectedNormalized = normalize(expected);
         final var result =
-                mResults.stream().filter(r -> Objects.equals(r.getKey(), expected)).findFirst().orElseGet(() ->
-                {
-                    final var r = new KeyResult(expected);
-                    mResults.add(r);
-                    return r;
-                });
+                mResults.stream()
+                        .filter(r -> Objects.equals(r.getKey(), expectedNormalized))
+                        .findFirst()
+                        .orElseGet(() ->
+                        {
+                            final var r = new KeyResult(expectedNormalized);
+                            mResults.add(r);
+                            return r;
+                        });
         if (Objects.equals(expected, pCharacter))
         {
             advance();
@@ -71,13 +77,24 @@ public class KeyByKey
         }
     }
 
+    private static String normalize(final String pText)
+    {
+        return pText == null ? null : pText.toUpperCase(Locale.ENGLISH);
+    }
+
     private void advance()
     {
         final var txtDigits = mIncludeDigits.get() ? DIGITS : "";
         final var txtUpper = mIncludeUppercase.get() ? CHARS_UPPER : "";
-        final var txt = CHARS_UPPER.toLowerCase() + txtUpper + txtDigits;
-        final var next = txt.charAt(RANDOM.nextInt(txt.length()));
-        mCurrent.set(String.valueOf(next));
+        final var txt = CHARS_LOWER + txtUpper + txtDigits;
+        final var prev = normalize(mCurrent.get());
+        String next;
+        do
+        {
+            next = String.valueOf(txt.charAt(RANDOM.nextInt(txt.length())));
+        }
+        while (normalize(next).equals(prev));
+        mCurrent.set(next);
     }
 
     public Property<Boolean> includeUppercaseProperty()
