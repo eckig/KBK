@@ -1,7 +1,6 @@
 package io.github.eckig.kbk;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class WeightedRandomKeySelector
@@ -29,11 +28,11 @@ public class WeightedRandomKeySelector
         return mElements.get(idx).mKey;
     }
 
-    public void addKeys(final Collection<Key> pKeys)
+    public void addKeys(final KeyList pKeys)
     {
         if (pKeys != null)
         {
-            for (final var key : pKeys)
+            for (final var key : pKeys.getKeys())
             {
                 if (key != null)
                 {
@@ -46,11 +45,11 @@ public class WeightedRandomKeySelector
         }
     }
 
-    public void removeKeys(final Collection<Key> pKeys)
+    public void removeKeys(final KeyList pKeys)
     {
         if (pKeys != null)
         {
-            for (final var key : pKeys)
+            for (final var key : pKeys.getKeys())
             {
                 if (key != null)
                 {

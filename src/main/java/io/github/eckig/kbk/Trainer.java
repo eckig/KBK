@@ -27,20 +27,19 @@ public class Trainer extends Application
     @Override
     public void start(Stage pStage)
     {
-        final var cbxNumbers = new CheckBox("Include Numbers?");
-        cbxNumbers.selectedProperty().bindBidirectional(mTrainer.includeNumbersProperty());
-
-        final var cbxUpper = new CheckBox("Include Uppercase?");
-        cbxUpper.selectedProperty().bindBidirectional(mTrainer.includeUppercaseProperty());
+        final var settings = new HBox(15);
+        for (final var list : mTrainer.getKeys())
+        {
+            final var cbxNumbers = new CheckBox("Include " + list.getLabel() + "?");
+            cbxNumbers.selectedProperty().bindBidirectional(list.activeProperty());
+            settings.getChildren().add(cbxNumbers);
+        }
 
         final var display = new Label();
         display.setStyle("-fx-font-family: monospace; -fx-font-size: 400%;");
         display.textProperty().bind(mTrainer.nextProperty().asString());
 
         final var gui = new BorderPane(display);
-
-        final var settings = new HBox(15, cbxNumbers, cbxUpper);
-
         final var report = createReportsView();
 
         final var bottom = new VBox(15, report, settings);
@@ -48,7 +47,7 @@ public class Trainer extends Application
         gui.setBottom(bottom);
 
         pStage.addEventFilter(KeyEvent.KEY_TYPED, this::keyPressed);
-        pStage.setScene(new Scene(gui, 300, 600));
+        pStage.setScene(new Scene(gui, 550, 550));
         pStage.show();
     }
 
@@ -56,7 +55,7 @@ public class Trainer extends Application
     {
         final var decFormat = new DecimalFormat("#%");
         final var table = new TableView<KeyResult>();
-        VBox.setVgrow(table, Priority.ALWAYS);
+        VBox.setVgrow(table, Priority.SOMETIMES);
 
         final var colKey = new TableColumn<KeyResult, Key>("Key");
         colKey.setCellValueFactory(v -> v.getValue().keyProperty());
