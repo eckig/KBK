@@ -1,31 +1,42 @@
 package io.github.eckig.kbk;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Random;
+import java.util.stream.IntStream;
 
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class KeyByKey
 {
-    private static final String CHARS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final String CHARS_LOWER = CHARS_UPPER.toLowerCase(Locale.ENGLISH);
-    private static final String DIGITS = "0123456789";
-    private static final Random RANDOM = new Random();
-
+    private static final List<Key> CHARS_UPPER =
+            IntStream.rangeClosed('A', 'Z').mapToObj(c -> new Key(String.valueOf((char) c))).toList();
+    private static final List<Key> CHARS_LOWER =
+            IntStream.rangeClosed('a', 'z').mapToObj(c -> new Key(String.valueOf((char) c)))
+                    .toList();
+    private static final List<Key> DIGITS =
+            IntStream.rangeClosed(0, 9).mapToObj(c -> new Key(String.valueOf(c))).toList();
+    private final WeightedRandomKeySelector mKeySelector = new WeightedRandomKeySelector();
     private final BooleanProperty mIncludeDigits = new SimpleBooleanProperty()
     {
         @Override
         protected void invalidated()
         {
+            if (get())
+            {
+                mKeySelector.addKeys(DIGITS);
+            }
+            else
+            {
+                mKeySelector.removeKeys(DIGITS);
+            }
             advance();
         }
     };
@@ -34,20 +45,30 @@ public class KeyByKey
         @Override
         protected void invalidated()
         {
+            if (get())
+            {
+                mKeySelector.addKeys(CHARS_UPPER);
+            }
+            else
+            {
+                mKeySelector.removeKeys(CHARS_UPPER);
+            }
             advance();
         }
     };
-    private final StringProperty mCurrent = new SimpleStringProperty();
+    private final ObjectProperty<Key> mCurrent = new SimpleObjectProperty<>();
+
 
     private final ObservableList<KeyResult> mResults =
             FXCollections.observableArrayList(e -> new Observable[] {e.rateProperty()});
 
     KeyByKey()
     {
+        mKeySelector.addKeys(CHARS_LOWER);
         advance();
     }
 
-    public ObservableValue<String> nextProperty()
+    public ObjectProperty<Key> nextProperty()
     {
         return mCurrent;
     }
@@ -55,18 +76,18 @@ public class KeyByKey
     public void tryNext(String pCharacter)
     {
         final var expected = mCurrent.get();
-        final var expectedNormalized = normalize(expected);
         final var result =
                 mResults.stream()
-                        .filter(r -> Objects.equals(r.getKey(), expectedNormalized))
+                        .filter(r -> Objects.equals(r.getKey(), expected))
                         .findFirst()
                         .orElseGet(() ->
                         {
-                            final var r = new KeyResult(expectedNormalized);
+                            final var r = new KeyResult(expected);
                             mResults.add(r);
+                            r.rateProperty().addListener((w, o, n) -> hitRateChangedOn(expected, n));
                             return r;
                         });
-        if (Objects.equals(expected, pCharacter))
+        if (Objects.equals(expected.key(), pCharacter))
         {
             advance();
             result.logHit();
@@ -77,23 +98,32 @@ public class KeyByKey
         }
     }
 
-    private static String normalize(final String pText)
+    private void hitRateChangedOn(Key pKey, Number pRate)
     {
-        return pText == null ? null : pText.toUpperCase(Locale.ENGLISH);
+        final double rate = pRate == null ? 0.0 : pRate.doubleValue();
+        if (rate < 0.5)
+        {
+            mKeySelector.setWeight(pKey, Priority.HIGH);
+        }
+        else if (rate < 1.0)
+        {
+            mKeySelector.setWeight(pKey, Priority.MID);
+        }
+        else
+        {
+            mKeySelector.setWeight(pKey, Priority.NORMAL);
+        }
     }
 
     private void advance()
     {
-        final var txtDigits = mIncludeDigits.get() ? DIGITS : "";
-        final var txtUpper = mIncludeUppercase.get() ? CHARS_UPPER : "";
-        final var txt = CHARS_LOWER + txtUpper + txtDigits;
-        final var prev = normalize(mCurrent.get());
-        String next;
+        final Key prev = mCurrent.get();
+        Key next;
         do
         {
-            next = String.valueOf(txt.charAt(RANDOM.nextInt(txt.length())));
+            next = mKeySelector.selectNext();
         }
-        while (normalize(next).equals(prev));
+        while (next.equals(prev));
         mCurrent.set(next);
     }
 

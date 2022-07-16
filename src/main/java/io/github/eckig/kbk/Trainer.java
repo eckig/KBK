@@ -1,7 +1,8 @@
 package io.github.eckig.kbk;
 
+import java.text.DecimalFormat;
+
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -14,11 +15,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.text.DecimalFormat;
 
 
 public class Trainer extends Application
@@ -37,7 +35,7 @@ public class Trainer extends Application
 
         final var display = new Label();
         display.setStyle("-fx-font-family: monospace; -fx-font-size: 400%;");
-        display.textProperty().bind(mTrainer.nextProperty());
+        display.textProperty().bind(mTrainer.nextProperty().asString());
 
         final var gui = new BorderPane(display);
 
@@ -60,7 +58,7 @@ public class Trainer extends Application
         final var table = new TableView<KeyResult>();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        final var colKey = new TableColumn<KeyResult, String>("Key");
+        final var colKey = new TableColumn<KeyResult, Key>("Key");
         colKey.setCellValueFactory(v -> v.getValue().keyProperty());
 
         final var colRate = new TableColumn<KeyResult, Number>("Hit Rate");

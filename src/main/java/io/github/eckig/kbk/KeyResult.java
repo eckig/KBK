@@ -2,20 +2,21 @@ package io.github.eckig.kbk;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyObjectPropertyBase;
 import javafx.beans.property.ReadOnlyStringPropertyBase;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ObservableValue;
 
 public class KeyResult
 {
-    private final ObservableValue<String> mKey;
+    private final ObservableValue<Key> mKey;
     private int mHits;
     private int mTotal;
     private final DoubleProperty mHitRate = new SimpleDoubleProperty();
 
-    KeyResult(final String pKey)
+    KeyResult(final Key pKey)
     {
-        mKey = new ReadOnlyStringPropertyBase()
+        mKey = new ReadOnlyObjectPropertyBase<>()
         {
             @Override
             public Object getBean()
@@ -30,14 +31,14 @@ public class KeyResult
             }
 
             @Override
-            public String get()
+            public Key get()
             {
                 return pKey;
             }
         };
     }
 
-    public ObservableValue<String> keyProperty()
+    public ObservableValue<Key> keyProperty()
     {
         return mKey;
     }
@@ -47,7 +48,7 @@ public class KeyResult
         return mHitRate;
     }
 
-    public String getKey()
+    public Key getKey()
     {
         return mKey.getValue();
     }
@@ -61,7 +62,8 @@ public class KeyResult
 
     private void update()
     {
-        mHitRate.set(((double) mHits / mTotal));
+        final double rate = (double) mHits / mTotal;
+        mHitRate.set(rate);
     }
 
     public void logMiss()
