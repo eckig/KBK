@@ -1,58 +1,45 @@
 package io.github.eckig.kbk;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
-import javafx.beans.Observable;
+import io.github.eckig.kbk.result.KeyResult;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+
 
 public class KeyByKey
 {
-    private static final KeyList CHARS_UPPER =
-            new KeyList(IntStream.rangeClosed('A', 'Z').mapToObj(c -> new Key(String.valueOf((char) c))).toList(),
-                    "Uppercase");
-    private static final KeyList CHARS_LOWER =
-            new KeyList(IntStream.rangeClosed('a', 'z').mapToObj(c -> new Key(String.valueOf((char) c))).toList(),
-                    "Lowercase");
-    private static final KeyList DIGITS =
-            new KeyList(IntStream.rangeClosed(0, 9).mapToObj(c -> new Key(String.valueOf(c))).toList(), "Digits");
-    private static final KeyList SYMBOLS =
-            new KeyList(List.of(new Key("("), new Key(")"), new Key("{"), new Key("}"), new Key("["), new Key("]"),
-                    new Key("<"), new Key(">"), new Key("."), new Key(","), new Key(";"), new Key(":"), new Key("?"),
-                    new Key("/"), new Key("!"), new Key("&"), new Key("="), new Key("+"), new Key("-")), "Symbols");
 
-    private static final List<KeyList> LIST = List.of(CHARS_UPPER, CHARS_LOWER, DIGITS, SYMBOLS);
     private final WeightedRandomKeySelector mKeySelector = new WeightedRandomKeySelector();
     private final ObjectProperty<Key> mCurrent = new SimpleObjectProperty<>();
 
-    private final ObservableList<KeyResult> mResults =
-            FXCollections.observableArrayList(e -> new Observable[] {e.rateProperty()});
+    private final ObservableMap<String, KeyResult> mResults = FXCollections.observableHashMap();
 
     KeyByKey()
     {
-        LIST.forEach(this::register);
-        CHARS_LOWER.activeProperty().set(true);
+        KeyList.DEFAULTS.forEach(this::register);
         advance();
     }
 
     private void register(final KeyList pKeyList)
     {
-        pKeyList.activeProperty().addListener((w, o, n) ->
+        pKeyList.activeProperty().addListener((w, o, n) -> keyListActiveChanged(pKeyList, n));
+        keyListActiveChanged(pKeyList, pKeyList.activeProperty().get());
+    }
+
+    private void keyListActiveChanged(final KeyList pKeyList, final boolean pActive)
+    {
+        if (pActive)
         {
-            if (n)
-            {
-                mKeySelector.addKeys(pKeyList);
-            }
-            else
-            {
-                mKeySelector.removeKeys(pKeyList);
-            }
-            advance();
-        });
+            mKeySelector.addKeys(pKeyList);
+        }
+        else
+        {
+            mKeySelector.removeKeys(pKeyList);
+        }
+        advance();
     }
 
     public ObjectProperty<Key> nextProperty()
@@ -63,26 +50,37 @@ public class KeyByKey
     public void tryNext(String pCharacter)
     {
         final var expected = mCurrent.get();
-        final var result =
-                mResults.stream()
-                        .filter(r -> Objects.equals(r.getKey(), expected))
-                        .findFirst()
-                        .orElseGet(() ->
-                        {
-                            final var r = new KeyResult(expected);
-                            mResults.add(r);
-                            r.rateProperty().addListener((w, o, n) -> hitRateChangedOn(expected, n));
-                            return r;
-                        });
+        final var result = getResult(expected);
         if (Objects.equals(expected.key(), pCharacter))
         {
-            advance();
             result.logHit();
+            advance();
         }
         else
         {
+            // record miss on both the missed key press and the one pressed instead:
+            getResult(pCharacter).logMiss();
             result.logMiss();
         }
+    }
+
+    public KeyResult getResult(final String pKey)
+    {
+        return mResults.computeIfAbsent(pKey, c -> {
+            final Key key = Key.of(c);
+            final var r = new KeyResult(key);
+            r.rateProperty().addListener((w, o, n) -> hitRateChangedOn(key, n));
+            return r;
+        });
+    }
+
+    public KeyResult getResult(final Key pKey)
+    {
+        return mResults.computeIfAbsent(pKey.key(), c -> {
+            final var r = new KeyResult(pKey);
+            r.rateProperty().addListener((w, o, n) -> hitRateChangedOn(pKey, n));
+            return r;
+        });
     }
 
     private void hitRateChangedOn(Key pKey, Number pRate)
@@ -112,15 +110,5 @@ public class KeyByKey
         }
         while (next.equals(prev));
         mCurrent.set(next);
-    }
-
-    public List<KeyList> getKeys()
-    {
-        return LIST;
-    }
-
-    public ObservableList<KeyResult> getResults()
-    {
-        return mResults;
     }
 }

@@ -1,39 +1,26 @@
 package io.github.eckig.kbk;
 
+import java.util.HashMap;
 import java.util.Locale;
-import java.util.Objects;
+import java.util.Map;
 
-public record Key(String key)
-{
-    @Override
-    public boolean equals(final Object o)
+
+public record Key(String key) {
+
+    private static final Map<String, Key> INDEX = new HashMap<>();
+
+    public static Key of(final String pKey)
     {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        Key key1 = (Key) o;
-        return equalsIgnoreCase(key, key1.key);
+        return INDEX.computeIfAbsent(pKey, Key::new);
     }
 
-    @Override
-    public int hashCode()
+    public Key toUpperCase()
     {
-        return Objects.hash(key);
+        return of(key().toUpperCase(Locale.ENGLISH));
     }
 
-    @Override
-    public String toString()
+    public Key toLowerCase()
     {
-        return key;
-    }
-
-    private static boolean equalsIgnoreCase(String a, String b)
-    {
-        return a != null && a.equalsIgnoreCase(b);
+        return of(key().toLowerCase(Locale.ENGLISH));
     }
 }
