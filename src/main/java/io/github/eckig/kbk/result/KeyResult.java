@@ -6,7 +6,7 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
 
-public class KeyResult implements IKeyResult
+public final class KeyResult implements IKeyResult
 {
 
     private final Key mKey;
@@ -43,9 +43,9 @@ public class KeyResult implements IKeyResult
     }
 
     @Override
-    public boolean isValidFor(final Key pKey)
+    public boolean matchesIgnoreCase(final Key pKey)
     {
-        return mKey == pKey;
+        return mKey.matchesIgnoreCase(pKey);
     }
 
     @Override

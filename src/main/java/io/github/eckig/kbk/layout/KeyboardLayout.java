@@ -5,9 +5,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import io.github.eckig.kbk.Key;
 
@@ -24,7 +26,7 @@ public final class KeyboardLayout
 
     public static KeyboardLayout get(final Layout pLayout)
     {
-        final var resource = KeyboardLayout.class.getResource(pLayout.file());
+        final var resource = KeyboardLayout.class.getResource(pLayout.fileName());
         if (resource == null)
         {
             return new KeyboardLayout(List.of());
@@ -33,11 +35,7 @@ public final class KeyboardLayout
         try (var stream = Files.lines(Path.of(resource.toURI())))
         {
             stream.forEach(line -> {
-                final List<Key> row = new ArrayList<>();
-                for (final var keyDef : line.split(" "))
-                {
-                    row.add(Key.of(keyDef));
-                }
+                final var row = Arrays.stream(line.split(" ")).map(keyDef -> Key.of(keyDef.toLowerCase(Locale.ENGLISH))).toList();
                 rows.add(List.copyOf(row));
             });
         }
@@ -76,7 +74,7 @@ public final class KeyboardLayout
 
         DVORAK, QWERTY;
 
-        public String file()
+        String fileName()
         {
             return name().toLowerCase(Locale.ENGLISH) + ".layout";
         }

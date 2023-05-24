@@ -4,15 +4,10 @@ import io.github.eckig.kbk.Key;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 
 
-public interface IKeyResult
+public sealed interface IKeyResult permits KeyResult
 {
-
-    default IKeyResult join(final IKeyResult pResult)
-    {
-        return new JoinedKeyResult(this, pResult);
-    }
 
     ReadOnlyDoubleProperty rateProperty();
 
-    boolean isValidFor(final Key pKey);
+    boolean matchesIgnoreCase(final Key pKey);
 }

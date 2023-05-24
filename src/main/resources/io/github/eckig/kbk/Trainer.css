@@ -1,0 +1,33 @@
+.root {
+    -fx-font-size: 16;
+}
+
+.display {
+    -fx-font-family: monospace;
+    -fx-font-size: 400%;
+}
+
+.key {
+    -fx-font-weight: bold;
+    -fx-font-family: monospace;
+    -fx-padding: 5 7 5 7;
+    -fx-background-radius: 5;
+    -fx-font-size: 150%;
+}
+.key:active {
+    -fx-text-background-color: white;
+    -fx-background-color: green;
+}
+.key:active:failure {
+    -fx-background-color: red;
+    -fx-text-background-color: white;
+}
+.key{
+    -fx-text-background-color: green;
+}
+.key:failure {
+    -fx-text-background-color: red;
+}
+.key:disabled {
+    -fx-text-background-color: black;
+}

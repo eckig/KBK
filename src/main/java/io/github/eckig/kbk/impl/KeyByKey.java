@@ -1,9 +1,15 @@
-package io.github.eckig.kbk;
+package io.github.eckig.kbk.impl;
 
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Random;
 
+import io.github.eckig.kbk.Key;
+import io.github.eckig.kbk.KeyList;
 import io.github.eckig.kbk.result.KeyResult;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
@@ -12,12 +18,14 @@ import javafx.collections.ObservableMap;
 public class KeyByKey
 {
 
+    private final BooleanProperty mUppercase = new SimpleBooleanProperty();
     private final WeightedRandomKeySelector mKeySelector = new WeightedRandomKeySelector();
     private final ObjectProperty<Key> mCurrent = new SimpleObjectProperty<>();
+    private final Random mRandom = new Random();
 
     private final ObservableMap<String, KeyResult> mResults = FXCollections.observableHashMap();
 
-    KeyByKey()
+    public KeyByKey()
     {
         KeyList.DEFAULTS.forEach(this::register);
         advance();
@@ -47,10 +55,15 @@ public class KeyByKey
         return mCurrent;
     }
 
+    public BooleanProperty upperCaseProperty()
+    {
+        return mUppercase;
+    }
+
     public void tryNext(String pCharacter)
     {
         final var expected = mCurrent.get();
-        final var result = getResult(expected);
+        final var result = getResult(expected.key());
         if (Objects.equals(expected.key(), pCharacter))
         {
             result.logHit();
@@ -59,7 +72,10 @@ public class KeyByKey
         else
         {
             // record miss on both the missed key press and the one pressed instead:
-            getResult(pCharacter).logMiss();
+            if (pCharacter != null && !pCharacter.isBlank())
+            {
+                getResult(pCharacter).logMiss();
+            }
             result.logMiss();
         }
     }
@@ -67,18 +83,9 @@ public class KeyByKey
     public KeyResult getResult(final String pKey)
     {
         return mResults.computeIfAbsent(pKey, c -> {
-            final Key key = Key.of(c);
+            final Key key = Key.of(c.toLowerCase(Locale.ENGLISH));
             final var r = new KeyResult(key);
             r.rateProperty().addListener((w, o, n) -> hitRateChangedOn(key, n));
-            return r;
-        });
-    }
-
-    public KeyResult getResult(final Key pKey)
-    {
-        return mResults.computeIfAbsent(pKey.key(), c -> {
-            final var r = new KeyResult(pKey);
-            r.rateProperty().addListener((w, o, n) -> hitRateChangedOn(pKey, n));
             return r;
         });
     }
@@ -109,6 +116,10 @@ public class KeyByKey
             next = mKeySelector.selectNext();
         }
         while (next.equals(prev));
+        if (mUppercase.get() && mRandom.nextBoolean())
+        {
+            next = next.toUpperCase();
+        }
         mCurrent.set(next);
     }
 }

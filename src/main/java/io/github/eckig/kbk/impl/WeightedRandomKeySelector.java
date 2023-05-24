@@ -1,10 +1,15 @@
-package io.github.eckig.kbk;
+package io.github.eckig.kbk.impl;
+
+import io.github.eckig.kbk.Key;
+import io.github.eckig.kbk.KeyList;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class WeightedRandomKeySelector
 {
+
     private final List<KeyElement> mElements = new ArrayList<>();
 
     public Key selectNext()
@@ -32,14 +37,11 @@ public class WeightedRandomKeySelector
     {
         if (pKeys != null)
         {
-            for (final var key : pKeys.getKeys())
+            for (final var key : pKeys)
             {
-                if (key != null)
+                if (mElements.isEmpty() || mElements.stream().noneMatch(e -> matchesExact(e.mKey, key)))
                 {
-                    if (mElements.isEmpty() || mElements.stream().noneMatch(e -> matchesExact(e.mKey, key)))
-                    {
-                        mElements.add(new KeyElement(key));
-                    }
+                    mElements.add(new KeyElement(key));
                 }
             }
         }
@@ -49,12 +51,9 @@ public class WeightedRandomKeySelector
     {
         if (pKeys != null)
         {
-            for (final var key : pKeys.getKeys())
+            for (final var key : pKeys)
             {
-                if (key != null)
-                {
-                    mElements.removeIf(e -> matchesExact(e.mKey, key));
-                }
+                mElements.removeIf(e -> matchesExact(e.mKey, key));
             }
         }
     }
@@ -68,15 +67,13 @@ public class WeightedRandomKeySelector
     {
         if (pKey != null)
         {
-            mElements.stream()
-                    .filter(e -> matchesExact(e.mKey, pKey))
-                    .findFirst()
-                    .ifPresent(e -> e.mWeight = pWeight.weight());
+            mElements.stream().filter(e -> matchesExact(e.mKey, pKey)).findFirst().ifPresent(e -> e.mWeight = pWeight.weight());
         }
     }
 
     private static final class KeyElement
     {
+
         private final Key mKey;
         private double mWeight = 0.1;
 

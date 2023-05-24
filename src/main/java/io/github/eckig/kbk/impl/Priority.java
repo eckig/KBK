@@ -1,4 +1,4 @@
-package io.github.eckig.kbk;
+package io.github.eckig.kbk.impl;
 
 public enum Priority
 {

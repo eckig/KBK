@@ -3,17 +3,19 @@ package io.github.eckig.kbk;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 
-public class KeyList
+public class KeyList implements Iterable<Key>
 {
 
-    public static final KeyList CHARS_LOWER = new KeyList(
-            IntStream.rangeClosed('a', 'z').mapToObj(c -> Key.of(String.valueOf((char) c))).toList(), "Lowercase", true);
-    private static final KeyList DIGITS = new KeyList(IntStream.rangeClosed(0, 9).mapToObj(c -> Key.of(String.valueOf(c))).toList(),
+    private static final KeyList CHARS_LOWER = new KeyList(
+            IntStream.rangeClosed('a', 'z').mapToObj(c -> Key.of(String.valueOf((char) c))).toList(), "Alphabet", true);
+    private static final KeyList DIGITS = new KeyList(IntStream.rangeClosed(0, 9).mapToObj(String::valueOf).map(Key::of).toList(),
             "Digits");
     private static final KeyList SYMBOLS = new KeyList(
             Stream.of("(", ")", "{", "}", "[", "]", "<", ">", ".", ",", ";", ":", "?", "/", "!", "&", "=", "+", "-", "'", "|").map(Key::of)
@@ -42,11 +44,6 @@ public class KeyList
         return mActive;
     }
 
-    public List<Key> getKeys()
-    {
-        return mKeys;
-    }
-
     public String getLabel()
     {
         return mLabel;
@@ -54,14 +51,23 @@ public class KeyList
 
     public boolean contains(final Key pKey)
     {
-        // TODO quick hack...
-        if (this == CHARS_LOWER)
-        {
-            return mKeys.contains(pKey) || mKeys.contains(pKey.toLowerCase());
-        }
-        else
-        {
-            return mKeys.contains(pKey);
-        }
+        return mKeys.contains(pKey);
+    }
+
+    @Override
+    public Iterator<Key> iterator()
+    {
+        return mKeys.iterator();
+    }
+
+    @Override
+    public Spliterator<Key> spliterator()
+    {
+        return mKeys.spliterator();
+    }
+
+    public Stream<Key> stream()
+    {
+        return mKeys.stream();
     }
 }
