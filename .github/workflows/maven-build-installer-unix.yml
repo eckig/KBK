@@ -9,7 +9,7 @@ on:
     types: [created]
 
 env:
-    VERSION_JFX: 20.0.1
+    VERSION_JFX: 21.0.1
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
-        java-version: 17
+        java-version: 21
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
