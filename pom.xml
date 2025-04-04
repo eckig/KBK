@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>23</version>
+            <version>25-ea+11</version>
         </dependency>
     </dependencies>
 
